@@ -359,7 +359,7 @@ class AlloyDataExtractor:
         self.df = pd.concat([self.df, atomic_df], axis=1)
 
 
-    def generate_final_output(self, output_filename: str = "alloy_data_output.xlsx"):
+    def generate_final_output(self, output_filename: str = "alloy_data_output.txt"):
         """
         Generates the final cleaned and processed DataFrame and saves it to an Excel file.
 
@@ -391,7 +391,7 @@ class AlloyDataExtractor:
         self.df.dropna(inplace=True)
         self.df = self.df[self.df[f'{self.alloy}'] > 80]
 
-        self.df.to_excel(output_filename, index=False)
+        self.df.to_csv(output_filename, sep=' ', index=False)
         print(f"Processed data saved to {output_filename}")
 
 # --- Main Execution ---
