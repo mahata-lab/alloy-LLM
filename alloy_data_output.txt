@@ -1,2 +1,0 @@
-alloy_name Ce Al Ti V Si Mg ys uts elongation AM paper
-"Al-10 wt% Ce" 2.09 97.91 0.0 0.0 0.0 0.0 222.1 319.3 10.8 LPBF s10853-020-05037-z.pdf
