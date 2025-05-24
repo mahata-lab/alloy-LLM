@@ -77,10 +77,16 @@ class QuestionAnswer:
 if __name__ == "__main__":
     api_key_input = input("Please enter your GCP Gemini API key: ")
     drive_root_input = input("Please enter the root directory of your extracted data files: ")
-    prompt = "Are there any alloys with an ys greater than 1000?"
 
     qa = QuestionAnswer(api_key=api_key_input, drive_root=drive_root_input)
-    print(qa.generate_content(prompt=prompt))
+    while True:
+        prompt = input("Ask a questions about the data (type 'exit' to close the program)")
+        if prompt.lower() == 'exit':
+            break
+
+        print(qa.generate_content(prompt=prompt))
+
+    print("Closing Program...")
 
 
         
