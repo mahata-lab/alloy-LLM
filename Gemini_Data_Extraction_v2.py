@@ -359,7 +359,7 @@ class AlloyDataExtractor:
         self.df = pd.concat([self.df, atomic_df], axis=1)
 
 
-    def generate_final_output(self, output_filename: str = "alloy_data_output.xlsx"):
+    def generate_final_output(self, output_filename: str = "alloy_data_output.txt"):
         """
         Generates the final cleaned and processed DataFrame and saves it to an Excel file.
 
