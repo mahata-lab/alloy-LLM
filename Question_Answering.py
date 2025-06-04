@@ -16,7 +16,7 @@ class QuestionAnswer:
 
     MODEL_ID = 'gemini-2.0-flash'
     EMBEDDING_MODEL_ID = 'models/embedding-001'
-    n_embeddings = 3
+    n_embeddings = 2
 
     system_instruction = """
     You are a materials scientist who is highly skilled at interpreting alloy-related data from tables. When asked a question,
