@@ -36,7 +36,7 @@ class AlloyDataExtractor:
         'direct metal laser sintering': "DMLS", 'binder jetting': "BJT",
         'laser metal deposition': "LMD", 'Friction Stir Additive Manufacturing': "FSAM",
         'Additive Friction Stir Deposition': "AFSD", 'powder bed fusion direct metal laser sintering': "PBF-DMLS",
-        'electron beam freeform fabrication': "EBFFF"
+        'electron beam freeform fabrication': "EBFFF", 'laser directed energy disposition': "LDEP"
     }
 
     def __init__(self, api_key: str, drive_root: str, alloy: str):
@@ -110,7 +110,7 @@ class AlloyDataExtractor:
         Extracts alloy data from PDF files using the Gemini API.
         """
         system_instruction = """
-        You are an expert material scientist. Your area of expertise resides in being able to identify the aluminium alloy of focus from research papers
+        You are an expert material scientist. Your area of expertise resides in being able to identify the alloy of focus from research papers
         and also identifying the alloy's following properties: yield strength (ys), ultimate tensile strength (uts), elongation (% strain), and the AM (additive manufacturing) process used.
         You will also provide the alloy's composition, carefully specifying which elements make up the alloy. You always return your response in the following
         json format: {alloy_name: 'example alloy', alloy_composition: 'example composition', ys: 'example ys', uts: 'example uts', elongation: 'example elongation', AM: 'example AM'}.
@@ -220,9 +220,14 @@ class AlloyDataExtractor:
                 prompt=f"{value}\nPlease provide the value."
             )
             if 'Not specified' in response_text:
-                print(f"Skipping {column_name} for index {index} as 'Not specified'.")
+                # adding 'not specified' as the value to leave it up to the end user to filter these things out
+                print("Not specified")
+                final_values.append(response_text.strip())
+                updated_responses.append(self.extracted_responses[original_indices.index(index)])
+
+                #print(f"Skipping {column_name} for index {index} as 'Not specified'.")
                 # Mark this index for removal from the main DataFrame
-                self.df.drop(index, inplace=True)
+                #self.df.drop(index, inplace=True)
             else:
                 final_values.append(response_text.strip())
                 updated_responses.append(self.extracted_responses[original_indices.index(index)])
@@ -361,10 +366,10 @@ class AlloyDataExtractor:
 
     def generate_final_output(self, output_filename: str = "alloy_data_output.txt"):
         """
-        Generates the final cleaned and processed DataFrame and saves it to an Excel file.
+        Generates the final cleaned and processed DataFrame and saves it to an text file.
 
         Args:
-            output_filename (str): The name of the Excel file to save.
+            output_filename (str): The name of the text file to save.
         """
         if self.df.empty:
             print("No data to export. Ensure all processing steps have been run.")
@@ -391,7 +396,7 @@ class AlloyDataExtractor:
         self.df.dropna(inplace=True)
         self.df = self.df[self.df[f'{self.alloy}'] > 80]
 
-        self.df.to_excel(output_filename)#, sep=' ', index=False)
+        self.df.to_csv(output_filename, sep=',', index=False)
         print(f"Processed data saved to {output_filename}")
 
 # --- Main Execution ---
@@ -399,7 +404,7 @@ if __name__ == "__main__":
     api_key_input = input("Please enter your GCP Gemini API key: ")
     drive_root_input = input("Please enter your folder path containing PDF files: ")
 
-    extractor = AlloyDataExtractor(api_key=api_key_input, drive_root=drive_root_input, alloy='Al')
+    extractor = AlloyDataExtractor(api_key=api_key_input, drive_root=drive_root_input, alloy='Ti')
 
     # Step 1: Extract initial alloy data from PDFs
     print("\n--- Step 1: Extracting alloy data from PDFs ---")
@@ -431,7 +436,7 @@ if __name__ == "__main__":
     extractor.convert_to_atomic_percentage()
 
     # Step 8: Generate final output
-    print("\n--- Step 8: Generating final output Excel file ---")
+    print("\n--- Step 8: Generating final output text file ---")
     extractor.generate_final_output()
 
     print("\nData extraction and processing complete!")
