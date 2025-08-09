@@ -94,16 +94,26 @@ class AlloyDataExtractor:
         Returns:
             dict: The decoded JSON as a dictionary, or an empty dictionary if decoding fails.
         """
+        json_objects = []
         json_start_index = json_string.find('{')
         json_end_index = json_string.rfind('}') # Use rfind to get the last occurrence
         if json_start_index != -1 and json_end_index != -1:
             cleaned_json_string = json_string[json_start_index : json_end_index + 1]
             try:
-                return json.loads(cleaned_json_string)
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-                print(f"Offending string: {cleaned_json_string}")
-        return {}
+                single_json = json.loads(cleaned_json_string)
+                json_objects.append(single_json)
+                #return json.loads(cleaned_json_string)
+            except json.JSONDecodeError:
+                try:
+                    array_json = f"[{cleaned_json_string}]"
+                    json_array = json.loads(array_json)
+                    json_objects.extend(json_array)
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON: {e}")
+                    print(f"Offending string: {cleaned_json_string}")
+
+        return json_objects
+        #return {}
 
     def extract_alloy_data(self):
         """
@@ -115,7 +125,10 @@ class AlloyDataExtractor:
         You will also provide the alloy's composition, carefully specifying which elements make up the alloy. You always return your response in the following
         json format: {alloy_name: 'example alloy', alloy_composition: 'example composition', ys: 'example ys', uts: 'example uts', elongation: 'example elongation', AM: 'example AM'}.
         If there is no alloy specified in the paper, you will inform us that there is no alloy mentioned. You will provide the value if a theoretical value is calculated or specified.
-        You are very careful not to make mistakes in your work."""
+        If the paper specifies multiple samples or alloys, you will provide yield strength (ys), ultimate tensile strength (uts), elongation (% strain) and the AM (additive manufacturing) process
+        used for all the samples specified in the paper. You will continue to ensure that you are following the json format described earlier. You are very careful not to make mistakes in your work.
+        You are aware that data might be presented in the form of a graph, so you are hyper-aware and super careful to ensure that you examine these graphs in great detail to ensure that you are not making
+        any mistakes or missing out on any data in the graphs."""
 
         for file in self.files:
             print(f"Processing {file}...")
@@ -141,13 +154,16 @@ class AlloyDataExtractor:
         """
         data_dicts = []
         valid_responses = []
+
         for i, (json_string, file_name) in enumerate(self.extracted_responses):
-            cleaned_data = self._clean_json_response(json_string)
-            if cleaned_data:
-                data_dicts.append(cleaned_data)
-                valid_responses.append((json_string, file_name))
-            else:
-                print(f"Skipping response from file {file_name} due to JSON decoding error.")
+            #cleaned_data_list = self._clean_json_response(json_string)
+            cleaned_data_list = self._clean_json_response(json_string)
+            if cleaned_data_list:
+                for cleaned_data in cleaned_data_list:
+                    data_dicts.append(cleaned_data)
+                    valid_responses.append((json_string, file_name))
+                else:
+                    print(f"Skipping response from file {file_name} due to JSON decoding error.")
 
         self.df = pd.DataFrame(data_dicts)
         self.extracted_responses = valid_responses # Update to only include valid responses
@@ -183,8 +199,9 @@ class AlloyDataExtractor:
                 system_instruction=system_instruction,
                 prompt=f"{prompt_data}\nPlease break down the alloy's percent composition by element based on its name and composition."
             )
-            cleaned_data = self._clean_json_response(response_text)
-            if cleaned_data:
+            cleaned_data_list = self._clean_json_response(response_text)
+            if cleaned_data_list:
+                cleaned_data = cleaned_data_list[0]
                 alloy_composition_data.append(cleaned_data)
                 updated_responses.append(self.extracted_responses[original_indices.index(index)])
             else:
@@ -364,7 +381,7 @@ class AlloyDataExtractor:
         self.df = pd.concat([self.df, atomic_df], axis=1)
 
 
-    def generate_final_output(self, output_filename: str = "alloy_data_output.txt"):
+    def generate_final_output(self, output_filename: str = "multiple_alloys_per_paper_test.txt"):
         """
         Generates the final cleaned and processed DataFrame and saves it to an text file.
 
@@ -394,7 +411,7 @@ class AlloyDataExtractor:
 
         # Drop rows with any NaN values in the final DataFrame for a clean output
         self.df.dropna(inplace=True)
-        self.df = self.df[self.df[f'{self.alloy}'] > 80]
+        #self.df = self.df[self.df[f'{self.alloy}'] > 80]
 
         self.df.to_csv(output_filename, sep=',', index=False)
         print(f"Processed data saved to {output_filename}")
@@ -404,7 +421,7 @@ if __name__ == "__main__":
     api_key_input = input("Please enter your GCP Gemini API key: ")
     drive_root_input = input("Please enter your folder path containing PDF files: ")
 
-    extractor = AlloyDataExtractor(api_key=api_key_input, drive_root=drive_root_input, alloy='Ti')
+    extractor = AlloyDataExtractor(api_key=api_key_input, drive_root=drive_root_input, alloy='Al')
 
     # Step 1: Extract initial alloy data from PDFs
     print("\n--- Step 1: Extracting alloy data from PDFs ---")

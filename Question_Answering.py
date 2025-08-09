@@ -14,7 +14,7 @@ class QuestionAnswer:
     using the Google Gemini API
     """
 
-    MODEL_ID = 'gemini-2.5-flash-preview-04-17'
+    MODEL_ID = 'gemini-2.0-flash'
     EMBEDDING_MODEL_ID = 'models/embedding-001'
     n_embeddings = 2
 
@@ -65,7 +65,7 @@ class QuestionAnswer:
 
         text = []
         for file in self.files:
-            df = pd.read_csv(file, sep=' ')
+            df = pd.read_csv(file, sep=',')
             df_json = df.to_json(orient="records")
             df_json_list = json.loads(df_json)
             for i in df_json_list:
@@ -131,7 +131,7 @@ class QuestionAnswer:
 
         df = []
         for i in self.files:
-            data = pd.read_csv(i, sep=' ')
+            data = pd.read_csv(i, sep=',')
             data = data.to_string()
             df.append(data)
         file_upload = df
